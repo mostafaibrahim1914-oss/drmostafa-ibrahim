@@ -1,0 +1,22 @@
+
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_admin() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.my_stage() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_approved() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_admin_new_student() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_students_new_content() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.redeem_code(text, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_exam_questions(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_exam_review(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.submit_attempt(uuid, jsonb) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.leaderboard(public.stage_level) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.my_stage() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_approved() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.redeem_code(text, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_exam_questions(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_exam_review(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.submit_attempt(uuid, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.leaderboard(public.stage_level) TO authenticated;
