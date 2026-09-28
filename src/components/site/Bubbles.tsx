@@ -13,7 +13,7 @@ export function Bubbles({ count = 22 }: { count?: number }) {
         size: 36 + Math.random() * 60,
         delay: Math.random() * 14,
         dur: 14 + Math.random() * 14,
-        g: GLYPHS[i % GLYPHS.length],
+        g: GLYPHS[i % GLYPHS.length] ?? "𓂀",
       })),
     );
   }, [count]);

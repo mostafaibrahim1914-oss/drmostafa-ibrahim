@@ -73,6 +73,7 @@ function AuthPage() {
       return;
     }
     toast.success(tx("تم إنشاء الحساب! بانتظار موافقة المدرس", "Account created! Awaiting approval"));
+    return;
   }
 
   return (
