@@ -399,6 +399,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      mark_notifications_read: { Args: never; Returns: undefined }
       my_stage: {
         Args: never
         Returns: Database["public"]["Enums"]["stage_level"]
