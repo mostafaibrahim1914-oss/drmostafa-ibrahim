@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate } from "@tanstack/react-router";
+import { ExternalLink, Play } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { STAGE_LABEL, type Stage, uploadFile, useApp, useSignedUrl } from "@/lib
 export const db = supabase as any;
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl border border-border/60 bg-card p-5 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`rounded-lg border border-border/70 bg-card p-5 shadow-sm ${className}`}>{children}</div>;
 }
 
 export function Avatar({ path, size = 48 }: { path?: string | null; size?: number }) {
@@ -139,11 +140,11 @@ export function ProfileEditor() {
 
 export function VideoPlayer({ v }: { v: any }) {
   const up = useSignedUrl("videos", v.source === "upload" ? v.url : null);
-  if (v.source === "upload") return up ? <video src={up} controls className="w-full rounded-xl" /> : null;
+  if (v.source === "upload") return up ? <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><video src={up} controls controlsList="nodownload" className="aspect-video w-full bg-navy-deep object-contain" /></div> : null;
   const yt = v.url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/)?.[1];
   if (v.source === "youtube" && yt)
-    return <iframe className="aspect-video w-full rounded-xl" src={`https://www.youtube.com/embed/${yt}`} allowFullScreen />;
-  return <a href={v.url} target="_blank" rel="noreferrer" className="text-primary underline">{v.url}</a>;
+    return <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><iframe title={v.title} className="aspect-video w-full" src={`https://www.youtube-nocookie.com/embed/${yt}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>;
+  return <Button asChild className="w-full"><a href={v.url} target="_blank" rel="noreferrer"><Play className="h-4 w-4" />{useApp().tx("فتح المحاضرة", "Open lecture")}<ExternalLink className="h-4 w-4" /></a></Button>;
 }
 
 export function QImage({ path }: { path?: string | null }) {

@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BarChart3, BookOpen, CircleUserRound, GraduationCap, LayoutDashboard, LockKeyhole, Play, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
+import { DashboardShell } from "@/components/site/DashboardShell";
 import { AttemptsReport, Card, db, Guard, Leaderboard, ProfileEditor, QImage, VideoPlayer } from "@/components/site/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +21,6 @@ export const Route = createFileRoute("/student")({
   }),
   component: () => (
     <div className="min-h-screen bg-background">
-      <Header />
       <Guard><Student /></Guard>
     </div>
   ),
@@ -27,24 +28,28 @@ export const Route = createFileRoute("/student")({
 
 function Student() {
   const { tx, profile, lang, session } = useApp();
-  const stage = profile!.stage!;
+  const stage = profile?.stage;
+  const [tab, setTab] = useState("content");
+  if (!stage || !session) return null;
+  const items = [
+    { value: "content", label: tx("الرئيسية والمحتوى", "Home & content"), icon: LayoutDashboard },
+    { value: "report", label: tx("تقرير الأداء", "Performance"), icon: BarChart3 },
+    { value: "top", label: tx("المتصدرون", "Leaderboard"), icon: Trophy },
+    { value: "me", label: tx("حسابي", "My account"), icon: CircleUserRound },
+  ];
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-1 text-3xl font-black">{tx("أهلاً", "Welcome")} {profile?.full_name}</h1>
-      <p className="mb-6 text-muted-foreground">{stage && STAGE_LABEL[stage][lang]}</p>
-      <Tabs defaultValue="content">
-        <TabsList className="mb-4 flex-wrap">
-          <TabsTrigger value="content">{tx("المحتوى", "Content")}</TabsTrigger>
-          <TabsTrigger value="report">{tx("تقريري", "My report")}</TabsTrigger>
-          <TabsTrigger value="top">{tx("الأوائل", "Leaderboard")}</TabsTrigger>
-          <TabsTrigger value="me">{tx("حسابي", "Account")}</TabsTrigger>
-        </TabsList>
+    <DashboardShell items={items} active={tab} onChange={setTab}>
+      <Header />
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-24">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-bold text-primary">{STAGE_LABEL[stage][lang]}</p><h1 className="mt-1 text-3xl font-black">{tx("مرحباً،", "Welcome,")} {profile?.full_name}</h1><p className="mt-1 text-muted-foreground">{tx("جاهز تكمل رحلتك في التاريخ؟", "Ready to continue your history journey?")}</p></div><div className="flex items-center gap-3 rounded-lg border bg-card px-5 py-3"><GraduationCap className="text-primary"/><div><p className="text-xs text-muted-foreground">{tx("المستوى الحالي","Current level")}</p><p className="font-bold">{tx("باحث صاعد","Rising researcher")}</p></div></div></div>
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="content"><Content /></TabsContent>
-        <TabsContent value="report"><Card><AttemptsReport userId={session!.user.id} /></Card></TabsContent>
-        <TabsContent value="top">{stage && <Leaderboard stage={stage} />}</TabsContent>
+        <TabsContent value="report"><Card><AttemptsReport userId={session.user.id} /></Card></TabsContent>
+        <TabsContent value="top"><Leaderboard stage={stage} /></TabsContent>
         <TabsContent value="me"><ProfileEditor /></TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardShell>
   );
 }
 
@@ -76,16 +81,16 @@ function Content() {
         const vs = videos.filter((v) => v.folder_id === f.id), es = exams.filter((e) => e.folder_id === f.id);
         if (!vs.length && !es.length) return null;
         return (
-          <Card key={f.id ?? "g"}>
-            <h2 className="mb-4 text-xl font-bold text-primary">📁 {f.title}</h2>
-            <div className="grid gap-4 md:grid-cols-2">
+          <section key={f.id ?? "g"} className="space-y-4">
+            <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary"><BookOpen className="h-5 w-5"/></div><div><h2 className="text-xl font-bold">{f.title}</h2><p className="text-xs text-muted-foreground">{vs.length} {tx("محاضرة", "lectures")} · {es.length} {tx("امتحان", "exams")}</p></div></div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {vs.map((v) => <VideoCard key={v.id} v={v} unlocked={!v.is_locked || unlocks.includes(v.id)} onUnlock={load} />)}
             </div>
             {es.map((e) => {
               const a = attempts.find((x) => x.exam_id === e.id);
               return (
-                <div key={e.id} className="mt-3 flex items-center justify-between rounded-xl bg-muted/50 p-3">
-                  <span className="font-semibold">📝 {e.title}</span>
+                <div key={e.id} className="flex items-center justify-between rounded-lg border bg-card p-4">
+                  <span className="flex items-center gap-2 font-semibold"><BarChart3 className="h-5 w-5 text-primary"/>{e.title}</span>
                   <div className="flex items-center gap-2">
                     {a && <span className="font-bold">{a.score}/{a.total}</span>}
                     {(!a || e.is_closed) && (
@@ -95,7 +100,7 @@ function Content() {
                 </div>
               );
             })}
-          </Card>
+          </section>
         );
       })}
     </div>
@@ -111,16 +116,17 @@ function VideoCard({ v, unlocked, onUnlock }: { v: any; unlocked: boolean; onUnl
     else toast.error(data?.error === "used" ? tx("الكود مستخدم", "Code used") : tx("كود غير صحيح", "Invalid code"));
   };
   return (
-    <div className="rounded-xl border border-border/60 p-3">
-      <div className="mb-2 font-semibold">🎬 {v.title}</div>
-      {v.description && <p className="mb-2 text-sm text-muted-foreground">{v.description}</p>}
-      {unlocked ? <VideoPlayer v={v} /> : (
-        <div className="space-y-2 rounded-lg bg-muted/50 p-4 text-center">
-          <p>🔒 {tx("سعر الحصة", "Price")}: <b className="text-primary">{v.price} {tx("جنيه", "EGP")}</b></p>
+    <article className="overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-gold">
+      <div className="relative aspect-video bg-navy-deep">
+        {unlocked ? <VideoPlayer v={v} /> : <div className="absolute inset-0 grid place-items-center bg-navy-deep"><div className="text-center"><LockKeyhole className="mx-auto h-9 w-9 text-primary"/><p className="mt-3 text-sm text-secondary-foreground/70">{tx("محاضرة مقفولة","Locked lecture")}</p></div></div>}
+      </div>
+      <div className="p-4"><div className="mb-2 flex items-center justify-between gap-3"><h3 className="font-bold">{v.title}</h3><span className="rounded-full bg-primary/15 px-2 py-1 text-xs font-bold text-primary"><Play className="me-1 inline h-3 w-3"/>{tx("فيديو","Video")}</span></div>
+      {v.description && <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{v.description}</p>}
+      {!unlocked && <div className="space-y-2 border-t pt-3">
+          <p className="text-sm">{tx("سعر الحصة", "Price")}: <b className="text-primary">{v.price} {tx("جنيه", "EGP")}</b></p>
           <div className="flex gap-2"><Input placeholder={tx("أدخل الكود", "Enter code")} value={code} onChange={(e) => setCode(e.target.value)} /><Button onClick={redeem}>{tx("فتح", "Unlock")}</Button></div>
-        </div>
-      )}
-    </div>
+      </div>}</div>
+    </article>
   );
 }
 
