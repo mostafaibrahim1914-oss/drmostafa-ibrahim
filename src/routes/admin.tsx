@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { BarChart3, BookOpen, KeyRound, LayoutDashboard, UserCog, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
+import { DashboardShell } from "@/components/site/DashboardShell";
 import { AttemptsReport, Avatar, Card, db, Guard, Leaderboard, ProfileEditor } from "@/components/site/shared";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,7 +25,6 @@ export const Route = createFileRoute("/admin")({
   }),
   component: () => (
     <div className="min-h-screen bg-background">
-      <Header />
       <Guard admin><Admin /></Guard>
     </div>
   ),
@@ -38,15 +39,21 @@ function StageSelect({ v, set }: { v: Stage; set: (s: Stage) => void }) {
 
 function Admin() {
   const { tx } = useApp();
+  const [tab, setTab] = useState("home");
+  const items = [
+    { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
+    { value: "students", label: tx("الطلاب", "Students"), icon: Users },
+    { value: "content", label: tx("المحتوى", "Content"), icon: BookOpen },
+    { value: "codes", label: tx("الأكواد", "Codes"), icon: KeyRound },
+    { value: "exams", label: tx("الامتحانات", "Exams"), icon: BarChart3 },
+    { value: "me", label: tx("حسابي", "Account"), icon: UserCog },
+  ];
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-black text-gold-gradient">{tx("لوحة التحكم", "Dashboard")}</h1>
-      <Tabs defaultValue="home">
-        <TabsList className="mb-4 flex h-auto flex-wrap">
-          {[["home", "الرئيسية", "Home"], ["students", "الطلاب", "Students"], ["content", "الفولدرات والفيديوهات", "Folders & videos"], ["codes", "الأكواد", "Codes"], ["exams", "الامتحانات", "Exams"], ["me", "حسابي", "Account"]].map(([k, a, e]) => (
-            <TabsTrigger key={k} value={k}>{tx(a, e)}</TabsTrigger>
-          ))}
-        </TabsList>
+    <DashboardShell items={items} active={tab} onChange={setTab}>
+      <Header />
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-24">
+      <div className="mb-7"><p className="text-sm font-bold text-primary">RESEARCHER CONTROL CENTER</p><h1 className="mt-1 text-3xl font-black">{tx("لوحة الإدارة", "Admin dashboard")}</h1><p className="mt-1 text-muted-foreground">{tx("إدارة الطلاب والمحتوى والاختبارات من مكان واحد", "Manage students, content and exams in one place")}</p></div>
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="home"><div className="grid gap-4 md:grid-cols-2">{STAGES.map((s) => <Leaderboard key={s} stage={s} top={3} />)}</div></TabsContent>
         <TabsContent value="students"><Students /></TabsContent>
         <TabsContent value="content"><ContentAdmin /></TabsContent>
@@ -54,7 +61,8 @@ function Admin() {
         <TabsContent value="exams"><Exams /></TabsContent>
         <TabsContent value="me"><ProfileEditor /></TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardShell>
   );
 }
 
