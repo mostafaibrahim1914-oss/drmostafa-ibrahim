@@ -1,5 +1,5 @@
-import { useState, type LucideIcon, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, LogOut, PanelRightClose } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ChevronLeft, LogOut, PanelRightClose, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/site/shared";
 import { LOGO_URL, useApp } from "@/lib/app-context";

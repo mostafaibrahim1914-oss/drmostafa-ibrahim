@@ -138,13 +138,15 @@ export function ProfileEditor() {
   );
 }
 
-export function VideoPlayer({ v }: { v: any }) {
+export function VideoPlayer({ v, rememberProgress = false }: { v: any; rememberProgress?: boolean }) {
+  const { tx } = useApp();
   const up = useSignedUrl("videos", v.source === "upload" ? v.url : null);
-  if (v.source === "upload") return up ? <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><video src={up} controls controlsList="nodownload" className="aspect-video w-full bg-navy-deep object-contain" /></div> : null;
+  const progressKey = `researcher-video-progress:${v.id}`;
+  if (v.source === "upload") return up ? <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><video src={up} controls controlsList="nodownload" className="aspect-video w-full bg-navy-deep object-contain" onLoadedMetadata={(event) => { if (!rememberProgress) return; const saved = Number(localStorage.getItem(progressKey) ?? 0); if (saved > 0 && saved < event.currentTarget.duration - 5) event.currentTarget.currentTime = saved; }} onTimeUpdate={(event) => { if (rememberProgress) localStorage.setItem(progressKey, String(Math.floor(event.currentTarget.currentTime))); }} /></div> : null;
   const yt = v.url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/)?.[1];
   if (v.source === "youtube" && yt)
     return <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><iframe title={v.title} className="aspect-video w-full" src={`https://www.youtube-nocookie.com/embed/${yt}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>;
-  return <Button asChild className="w-full"><a href={v.url} target="_blank" rel="noreferrer"><Play className="h-4 w-4" />{useApp().tx("فتح المحاضرة", "Open lecture")}<ExternalLink className="h-4 w-4" /></a></Button>;
+  return <Button asChild className="w-full"><a href={v.url} target="_blank" rel="noreferrer"><Play className="h-4 w-4" />{tx("فتح المحاضرة", "Open lecture")}<ExternalLink className="h-4 w-4" /></a></Button>;
 }
 
 export function QImage({ path }: { path?: string | null }) {
