@@ -171,3 +171,18 @@
 @keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 .animate-fade-up { animation: fade-up 0.9s cubic-bezier(.2,.7,.2,1) both; }
 .animate-spin-slow { animation: spin-slow 40s linear infinite; }
+
+@keyframes icon-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-3px) rotate(-4deg); } }
+@keyframes glow-pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 35%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary) 0%, transparent); } }
+@utility icon-tile {
+  display: grid; place-items: center; flex-shrink: 0; width: 3rem; height: 3rem; border-radius: 0.85rem;
+  color: var(--primary);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 22%, transparent), color-mix(in oklab, var(--primary) 6%, transparent));
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  animation: glow-pulse 3.2s ease-in-out infinite;
+  & > svg { animation: icon-float 3.6s ease-in-out infinite; }
+}
+@utility glass-card { background: color-mix(in oklab, var(--card) 82%, transparent); backdrop-filter: blur(10px); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
