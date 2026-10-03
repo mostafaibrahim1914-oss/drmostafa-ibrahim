@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate } from "@tanstack/react-router";
 import { ExternalLink, Play } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import { STAGE_LABEL, type Stage, uploadFile, useApp, useSignedUrl } from "@/lib
 export const db = supabase as any;
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-lg border border-border/70 bg-card p-5 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`rounded-xl border border-border/70 glass-card p-5 shadow-sm ${className}`}>{children}</div>;
 }
 
 export function Avatar({ path, size = 48 }: { path?: string | null; size?: number }) {
@@ -138,15 +138,34 @@ export function ProfileEditor() {
   );
 }
 
+async function saveProgress(videoId: string, position: number, duration: number) {
+  const { data: u } = await supabase.auth.getSession();
+  const uid = u.session?.user.id; if (!uid) return;
+  const completed = duration > 0 ? position / duration >= 0.9 : false;
+  await db.from("lecture_progress").upsert({ user_id: uid, video_id: videoId, position_seconds: Math.floor(position), duration_seconds: Math.floor(duration), last_watched_at: new Date().toISOString(), ...(completed ? { completed: true } : {}) }, { onConflict: "user_id,video_id" });
+}
+
 export function VideoPlayer({ v, rememberProgress = false }: { v: any; rememberProgress?: boolean }) {
   const { tx } = useApp();
   const up = useSignedUrl("videos", v.source === "upload" ? v.url : null);
   const progressKey = `researcher-video-progress:${v.id}`;
-  if (v.source === "upload") return up ? <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><video src={up} controls controlsList="nodownload" className="aspect-video w-full bg-navy-deep object-contain" onLoadedMetadata={(event) => { if (!rememberProgress) return; const saved = Number(localStorage.getItem(progressKey) ?? 0); if (saved > 0 && saved < event.currentTarget.duration - 5) event.currentTarget.currentTime = saved; }} onTimeUpdate={(event) => { if (rememberProgress) localStorage.setItem(progressKey, String(Math.floor(event.currentTarget.currentTime))); }} /></div> : null;
+  const lastSave = useRef(0);
+  useEffect(() => { if (rememberProgress && v.source !== "upload") saveProgress(v.id, 0, 0); }, [v.id]);
+  if (v.source === "upload") return up ? <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><video src={up} controls controlsList="nodownload" className="aspect-video w-full bg-navy-deep object-contain"
+    onLoadedMetadata={async (event) => { if (!rememberProgress) return; const el = event.currentTarget; let saved = Number(localStorage.getItem(progressKey) ?? 0); const { data } = await db.from("lecture_progress").select("position_seconds").eq("video_id", v.id).maybeSingle(); if (data?.position_seconds) saved = Math.max(saved, data.position_seconds); if (saved > 0 && saved < el.duration - 5) el.currentTime = saved; }}
+    onTimeUpdate={(event) => { if (!rememberProgress) return; const el = event.currentTarget; localStorage.setItem(progressKey, String(Math.floor(el.currentTime))); if (Date.now() - lastSave.current > 15000) { lastSave.current = Date.now(); saveProgress(v.id, el.currentTime, el.duration || 0); } }}
+    onPause={(event) => { if (rememberProgress) saveProgress(v.id, event.currentTarget.currentTime, event.currentTarget.duration || 0); }}
+    onEnded={(event) => { if (rememberProgress) saveProgress(v.id, event.currentTarget.duration, event.currentTarget.duration); }} /></div> : null;
   const yt = v.url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/)?.[1];
   if (v.source === "youtube" && yt)
     return <div className="overflow-hidden rounded-lg border bg-navy-deep shadow-xl"><iframe title={v.title} className="aspect-video w-full" src={`https://www.youtube-nocookie.com/embed/${yt}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>;
   return <Button asChild className="w-full"><a href={v.url} target="_blank" rel="noreferrer"><Play className="h-4 w-4" />{tx("فتح المحاضرة", "Open lecture")}<ExternalLink className="h-4 w-4" /></a></Button>;
+}
+
+export async function markLectureComplete(videoId: string) {
+  const { data: u } = await supabase.auth.getSession();
+  const uid = u.session?.user.id; if (!uid) return;
+  await db.from("lecture_progress").upsert({ user_id: uid, video_id: videoId, completed: true, last_watched_at: new Date().toISOString() }, { onConflict: "user_id,video_id" });
 }
 
 export function QImage({ path }: { path?: string | null }) {
