@@ -90,6 +90,44 @@ export type Database = {
           },
         ]
       }
+      center_grades: {
+        Row: {
+          created_at: string
+          exam_date: string
+          exam_title: string
+          id: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date?: string
+          exam_title: string
+          id?: string
+          score?: number
+          total?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          exam_title?: string
+          id?: string
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_grades_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exams: {
         Row: {
           created_at: string
@@ -148,6 +186,47 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      lecture_progress: {
+        Row: {
+          completed: boolean
+          duration_seconds: number
+          first_watched_at: string
+          id: string
+          last_watched_at: string
+          position_seconds: number
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          completed?: boolean
+          duration_seconds?: number
+          first_watched_at?: string
+          id?: string
+          last_watched_at?: string
+          position_seconds?: number
+          user_id?: string
+          video_id: string
+        }
+        Update: {
+          completed?: boolean
+          duration_seconds?: number
+          first_watched_at?: string
+          id?: string
+          last_watched_at?: string
+          position_seconds?: number
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lecture_progress_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -259,6 +338,38 @@ export type Database = {
           },
         ]
       }
+      student_absences: {
+        Row: {
+          absence_date: string
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          absence_date?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          absence_date?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_absences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -358,6 +469,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_access_codes: {
+        Args: { _count: number; _video_id: string }
+        Returns: {
+          code: string
+          created_at: string
+          id: string
+          price: number
+          used_at: string | null
+          used_by: string | null
+          video_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "access_codes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_exam_questions: {
         Args: { _exam_id: string }
         Returns: {
