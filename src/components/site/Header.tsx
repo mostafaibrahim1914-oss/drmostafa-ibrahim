@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Languages, LogOut, Moon, Sun, LayoutDashboard } from "lucide-react";
+import { Bell, CheckCheck, Languages, LogOut, Moon, Sun, LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,7 +18,7 @@ function NotificationsBell() {
       .from("notifications")
       .select("id,title,body,created_at,read_by")
       .order("created_at", { ascending: false })
-      .limit(30);
+      .limit(100);
     setItems((data as Notif[]) ?? []);
   };
   useEffect(() => {
@@ -28,20 +28,17 @@ function NotificationsBell() {
     return () => clearInterval(t);
   }, [uid]);
 
-  const unread = items.filter((n) => !(Array.isArray(n.read_by) && n.read_by.includes(uid))).length;
+  const isNew = (n: Notif) => !(Array.isArray(n.read_by) && n.read_by.includes(uid));
+  const unread = items.filter(isNew).length;
+  const [onlyNew, setOnlyNew] = useState(true);
+  const shown = onlyNew ? items.filter(isNew) : items;
+  const markAll = async () => { await supabase.rpc("mark_notifications_read"); load(); };
 
   return (
-    <Popover
-      onOpenChange={async (o) => {
-        if (!o && unread) {
-          await supabase.rpc("mark_notifications_read");
-          load();
-        }
-      }}
-    >
+    <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" aria-label={tx("الإشعارات", "Notifications")}>
-          <Bell className="h-5 w-5" />
+          <Bell className={`h-5 w-5 ${unread ? "animate-[icon-float_1.8s_ease-in-out_infinite]" : ""}`} />
           {unread > 0 && (
             <span className="absolute -top-0.5 -end-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
               {unread}
@@ -49,22 +46,26 @@ function NotificationsBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
-        <div className="border-b px-4 py-3 font-bold">{tx("الإشعارات", "Notifications")}</div>
-        <div className="max-h-96 overflow-y-auto">
-          {items.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">{tx("لا توجد إشعارات", "No notifications")}</p>
+      <PopoverContent align="end" className="w-[22rem] p-0">
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+          <span className="font-bold">{tx("الإشعارات", "Notifications")}</span>
+          <Button size="sm" variant="ghost" disabled={!unread} onClick={markAll} className="h-8 gap-1 text-primary"><CheckCheck className="h-4 w-4" />{tx("تمت القراءة", "Mark all read")}</Button>
+        </div>
+        <div className="flex gap-1 border-b p-2">
+          <Button size="sm" variant={onlyNew ? "default" : "ghost"} className="h-7 flex-1" onClick={() => setOnlyNew(true)}>{tx("الجديد", "New")} ({unread})</Button>
+          <Button size="sm" variant={!onlyNew ? "default" : "ghost"} className="h-7 flex-1" onClick={() => setOnlyNew(false)}>{tx("الكل", "All")}</Button>
+        </div>
+        <div className="max-h-96 overflow-y-auto overscroll-contain">
+          {shown.length === 0 && (
+            <p className="p-6 text-center text-sm text-muted-foreground">{onlyNew ? tx("لا توجد إشعارات جديدة", "No new notifications") : tx("لا توجد إشعارات", "No notifications")}</p>
           )}
-          {items.map((n) => {
-            const isNew = !(Array.isArray(n.read_by) && n.read_by.includes(uid));
-            return (
-              <div key={n.id} className={`border-b px-4 py-3 text-sm ${isNew ? "bg-accent/50" : ""}`}>
-                <div className="font-semibold">{n.title}</div>
-                {n.body && <div className="text-muted-foreground">{n.body}</div>}
-                <div className="mt-1 text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</div>
-              </div>
-            );
-          })}
+          {shown.map((n) => (
+            <div key={n.id} className={`border-b px-4 py-3 text-sm ${isNew(n) ? "border-s-2 border-s-primary bg-primary/5" : "opacity-70"}`}>
+              <div className="font-semibold">{n.title}</div>
+              {n.body && <div className="text-muted-foreground">{n.body}</div>}
+              <div className="mt-1 text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</div>
+            </div>
+          ))}
         </div>
       </PopoverContent>
     </Popover>
