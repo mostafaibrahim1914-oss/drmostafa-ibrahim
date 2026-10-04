@@ -159,8 +159,8 @@ export async function uploadFile(bucket: string, folder: string, file: File) {
 export async function uploadFileWithProgress(bucket: string, folder: string, file: File, onProgress: (percent: number) => void) {
   const ext = file.name.split(".").pop() || "bin";
   const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const apiKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const baseUrl = import.meta.env["VITE_SUPABASE_URL"];
+  const apiKey = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!baseUrl || !apiKey || !token) throw new Error("Upload session is unavailable");
