@@ -154,3 +154,31 @@ export async function uploadFile(bucket: string, folder: string, file: File) {
   if (error) throw error;
   return path;
 }
+
+/** Upload a larger file while reporting the real transferred percentage. */
+export async function uploadFileWithProgress(bucket: string, folder: string, file: File, onProgress: (percent: number) => void) {
+  const ext = file.name.split(".").pop() || "bin";
+  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const apiKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!baseUrl || !apiKey || !token) throw new Error("Upload session is unavailable");
+  const objectPath = path.split("/").map(encodeURIComponent).join("/");
+  await new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `${baseUrl}/storage/v1/object/${bucket}/${objectPath}`);
+    request.setRequestHeader("apikey", apiKey);
+    request.setRequestHeader("Authorization", `Bearer ${token}`);
+    request.setRequestHeader("x-upsert", "true");
+    request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    request.onload = () => request.status >= 200 && request.status < 300 ? resolve() : reject(new Error("Upload failed"));
+    request.onerror = () => reject(new Error("Upload failed"));
+    request.send(file);
+  });
+  onProgress(100);
+  return path;
+}
