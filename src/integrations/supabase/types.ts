@@ -55,8 +55,11 @@ export type Database = {
       attempts: {
         Row: {
           answers: Json
+          essay_score: number
           exam_id: string
+          grading_status: string
           id: string
+          objective_score: number
           score: number
           submitted_at: string
           total: number
@@ -64,8 +67,11 @@ export type Database = {
         }
         Insert: {
           answers?: Json
+          essay_score?: number
           exam_id: string
+          grading_status?: string
           id?: string
+          objective_score?: number
           score?: number
           submitted_at?: string
           total?: number
@@ -73,8 +79,11 @@ export type Database = {
         }
         Update: {
           answers?: Json
+          essay_score?: number
           exam_id?: string
+          grading_status?: string
           id?: string
+          objective_score?: number
           score?: number
           submitted_at?: string
           total?: number
@@ -305,8 +314,10 @@ export type Database = {
           id: string
           image_url: string | null
           options: Json
+          points: number
           prompt: string
           q_order: number
+          question_type: string
         }
         Insert: {
           correct_index?: number
@@ -315,8 +326,10 @@ export type Database = {
           id?: string
           image_url?: string | null
           options?: Json
+          points?: number
           prompt?: string
           q_order?: number
+          question_type?: string
         }
         Update: {
           correct_index?: number
@@ -325,8 +338,10 @@ export type Database = {
           id?: string
           image_url?: string | null
           options?: Json
+          points?: number
           prompt?: string
           q_order?: number
+          question_type?: string
         }
         Relationships: [
           {
@@ -419,6 +434,7 @@ export type Database = {
       }
       videos: {
         Row: {
+          cover_image_url: string | null
           created_at: string
           description: string
           folder_id: string | null
@@ -431,6 +447,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
           description?: string
           folder_id?: string | null
@@ -443,6 +460,7 @@ export type Database = {
           url: string
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
           description?: string
           folder_id?: string | null
@@ -493,8 +511,10 @@ export type Database = {
           id: string
           image_url: string
           options: Json
+          points: number
           prompt: string
           q_order: number
+          question_type: string
         }[]
       }
       get_exam_review: {
@@ -504,8 +524,10 @@ export type Database = {
           id: string
           image_url: string
           options: Json
+          points: number
           prompt: string
           q_order: number
+          question_type: string
         }[]
       }
       has_role: {

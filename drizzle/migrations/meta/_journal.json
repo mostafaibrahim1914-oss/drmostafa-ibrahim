@@ -8,6 +8,13 @@
       "when": 1791028521021,
       "tag": "0000_analytics_progress_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791100247028,
+      "tag": "0001_video_covers_and_essay_grading",
+      "breakpoints": true
     }
   ]
 }
