@@ -203,25 +203,25 @@ function ContentAdmin() {
 }
 
 function Codes() {
-  const { tx } = useApp();
+  const { tx, lang } = useApp();
   const [videos, setVideos] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
-  const [vid, setVid] = useState(""); const [n, setN] = useState(10);
+  const [stage, setStage] = useState<Stage>("sec1"); const [vid, setVid] = useState(""); const [n, setN] = useState(10);
   const load = () => db.from("access_codes").select("*, videos(title), profiles:used_by(full_name)").order("created_at", { ascending: false }).then(({ data, error }: any) => {
     if (error) db.from("access_codes").select("*, videos(title)").order("created_at", { ascending: false }).then(({ data }: any) => setCodes(data ?? []));
     else setCodes(data ?? []);
   });
-  useEffect(() => { db.from("videos").select("id,title,price").eq("is_locked", true).then(({ data }: any) => setVideos(data ?? [])); load(); }, []);
+  useEffect(() => { db.from("videos").select("id,title,price,stage").eq("is_locked", true).order("title").then(({ data }: any) => setVideos(data ?? [])); load(); }, []);
   const gen = async () => {
     const v = videos.find((x) => x.id === vid); if (!v) return;
-    const rows = Array.from({ length: n }, () => ({ video_id: vid, price: v.price, code: Math.random().toString(36).slice(2, 10).toUpperCase() }));
-    const { error } = await db.from("access_codes").insert(rows);
-    error ? toast.error(error.message) : load();
+    const { data, error } = await db.rpc("generate_access_codes", { _video_id: vid, _count: Math.max(1, Math.min(500, n)) });
+    if (error) toast.error(error.message); else { toast.success(`${data?.length ?? n} ${tx("كود مختلف تم إصداره", "unique codes generated")}`); load(); }
   };
   return (
     <Card>
       <div className="mb-4 flex flex-wrap gap-2">
-        <select className={sel + " max-w-xs"} value={vid} onChange={(e) => setVid(e.target.value)}><option value="">{tx("اختر فيديو مقفول", "Choose locked video")}</option>{videos.map((v) => <option key={v.id} value={v.id}>{v.title} ({v.price})</option>)}</select>
+        <select className={sel + " max-w-xs"} value={stage} onChange={(e) => { setStage(e.target.value as Stage); setVid(""); }}>{STAGES.map((s) => <option key={s} value={s}>{STAGE_LABEL[s][lang]}</option>)}</select>
+        <select className={sel + " max-w-xs"} value={vid} onChange={(e) => setVid(e.target.value)}><option value="">{tx("اختر فيديو مقفول", "Choose locked video")}</option>{videos.filter((v) => v.stage === stage).map((v) => <option key={v.id} value={v.id}>{v.title} ({v.price})</option>)}</select>
         <Input type="number" className="w-24" value={n} onChange={(e) => setN(+e.target.value)} />
         <Button onClick={gen}>{tx("إصدار أكواد", "Generate")}</Button>
       </div>
