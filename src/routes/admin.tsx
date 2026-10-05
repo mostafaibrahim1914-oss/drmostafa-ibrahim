@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { BarChart3, BookOpen, KeyRound, LayoutDashboard, UserCog, Users } from "lucide-react";
+import { BarChart3, KeyRound, LayoutDashboard, UserCog, Users, Video, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { DashboardShell } from "@/components/site/DashboardShell";
@@ -13,6 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminDeleteUser, adminSetPassword } from "@/lib/admin.functions";
 import { STAGE_LABEL, STAGES, type Stage, uploadFile, useApp } from "@/lib/app-context";
+import { AdminLectures } from "@/components/site/AdminLectures";
+import { AdminExams } from "@/components/site/AdminExams";
+import { AdminPerformance } from "@/components/site/AdminPerformance";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -21,6 +24,8 @@ export const Route = createFileRoute("/admin")({
       { name: "description", content: "لوحة تحكم الأدمن لإدارة الطلاب والمحتوى على منصة Researcher." },
       { property: "og:title", content: "Admin Dashboard | Researcher" },
       { property: "og:description", content: "Manage students, videos, exams and codes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => (
@@ -43,11 +48,13 @@ function Admin() {
   const items = [
     { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
     { value: "students", label: tx("الطلاب", "Students"), icon: Users },
-    { value: "content", label: tx("المحتوى", "Content"), icon: BookOpen },
+    { value: "lectures", label: tx("الوحدات والمحاضرات", "Units & lectures"), icon: Video },
     { value: "codes", label: tx("الأكواد", "Codes"), icon: KeyRound },
-    { value: "exams", label: tx("الامتحانات", "Exams"), icon: BarChart3 },
+    { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardList },
+    { value: "performance", label: tx("أداء الطلاب", "Student performance"), icon: BarChart3 },
     { value: "me", label: tx("حسابي", "Account"), icon: UserCog },
   ];
+  useEffect(() => { const go = (event: Event) => setTab((event as CustomEvent<string>).detail); window.addEventListener("dashboard:navigate", go); return () => window.removeEventListener("dashboard:navigate", go); }, []);
   return (
     <DashboardShell items={items} active={tab} onChange={setTab}>
       <Header />
@@ -56,9 +63,10 @@ function Admin() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="home"><div className="grid gap-4 md:grid-cols-2">{STAGES.map((s) => <Leaderboard key={s} stage={s} top={3} />)}</div></TabsContent>
         <TabsContent value="students"><Students /></TabsContent>
-        <TabsContent value="content"><ContentAdmin /></TabsContent>
+         <TabsContent value="lectures"><AdminLectures /></TabsContent>
         <TabsContent value="codes"><Codes /></TabsContent>
-        <TabsContent value="exams"><Exams /></TabsContent>
+         <TabsContent value="exams"><AdminExams /></TabsContent>
+         <TabsContent value="performance"><AdminPerformance /></TabsContent>
         <TabsContent value="me"><ProfileEditor /></TabsContent>
       </Tabs>
       </div>
@@ -197,25 +205,25 @@ function ContentAdmin() {
 }
 
 function Codes() {
-  const { tx } = useApp();
+  const { tx, lang } = useApp();
   const [videos, setVideos] = useState<any[]>([]);
   const [codes, setCodes] = useState<any[]>([]);
-  const [vid, setVid] = useState(""); const [n, setN] = useState(10);
+  const [stage, setStage] = useState<Stage>("sec1"); const [vid, setVid] = useState(""); const [n, setN] = useState(10);
   const load = () => db.from("access_codes").select("*, videos(title), profiles:used_by(full_name)").order("created_at", { ascending: false }).then(({ data, error }: any) => {
     if (error) db.from("access_codes").select("*, videos(title)").order("created_at", { ascending: false }).then(({ data }: any) => setCodes(data ?? []));
     else setCodes(data ?? []);
   });
-  useEffect(() => { db.from("videos").select("id,title,price").eq("is_locked", true).then(({ data }: any) => setVideos(data ?? [])); load(); }, []);
+  useEffect(() => { db.from("videos").select("id,title,price,stage").eq("is_locked", true).order("title").then(({ data }: any) => setVideos(data ?? [])); load(); }, []);
   const gen = async () => {
     const v = videos.find((x) => x.id === vid); if (!v) return;
-    const rows = Array.from({ length: n }, () => ({ video_id: vid, price: v.price, code: Math.random().toString(36).slice(2, 10).toUpperCase() }));
-    const { error } = await db.from("access_codes").insert(rows);
-    error ? toast.error(error.message) : load();
+    const { data, error } = await db.rpc("generate_access_codes", { _video_id: vid, _count: Math.max(1, Math.min(500, n)) });
+    if (error) toast.error(error.message); else { toast.success(`${data?.length ?? n} ${tx("كود مختلف تم إصداره", "unique codes generated")}`); load(); }
   };
   return (
     <Card>
       <div className="mb-4 flex flex-wrap gap-2">
-        <select className={sel + " max-w-xs"} value={vid} onChange={(e) => setVid(e.target.value)}><option value="">{tx("اختر فيديو مقفول", "Choose locked video")}</option>{videos.map((v) => <option key={v.id} value={v.id}>{v.title} ({v.price})</option>)}</select>
+        <select className={sel + " max-w-xs"} value={stage} onChange={(e) => { setStage(e.target.value as Stage); setVid(""); }}>{STAGES.map((s) => <option key={s} value={s}>{STAGE_LABEL[s][lang]}</option>)}</select>
+        <select className={sel + " max-w-xs"} value={vid} onChange={(e) => setVid(e.target.value)}><option value="">{tx("اختر فيديو مقفول", "Choose locked video")}</option>{videos.filter((v) => v.stage === stage).map((v) => <option key={v.id} value={v.id}>{v.title} ({v.price})</option>)}</select>
         <Input type="number" className="w-24" value={n} onChange={(e) => setN(+e.target.value)} />
         <Button onClick={gen}>{tx("إصدار أكواد", "Generate")}</Button>
       </div>

@@ -9,7 +9,7 @@ import { LOGO_URL, useApp } from "@/lib/app-context";
 type Notif = { id: string; title: string; body: string; created_at: string; read_by: unknown };
 
 function NotificationsBell() {
-  const { session, tx } = useApp();
+  const { session, tx, isAdmin } = useApp();
   const [items, setItems] = useState<Notif[]>([]);
   const uid = session?.user.id ?? "";
 
@@ -32,7 +32,17 @@ function NotificationsBell() {
   const unread = items.filter(isNew).length;
   const [onlyNew, setOnlyNew] = useState(true);
   const shown = onlyNew ? items.filter(isNew) : items;
-  const markAll = async () => { await supabase.rpc("mark_notifications_read"); load(); };
+  const markAll = async () => {
+    setItems((current) => current.map((item) => ({ ...item, read_by: [...(Array.isArray(item.read_by) ? item.read_by : []), uid] })));
+    const { error } = await supabase.rpc("mark_notifications_read");
+    if (error) await load();
+  };
+  const openNotification = async (notification: Notif) => {
+    const text = `${notification.title} ${notification.body}`;
+    const section = /امتحان|كويز|تصحيح/.test(text) ? "exams" : /محاضرة|فيديو|كود/.test(text) ? (isAdmin ? "lectures" : "lectures") : /طالب|تسجيل|حساب/.test(text) ? (isAdmin ? "students" : "me") : isAdmin ? "home" : "home";
+    window.dispatchEvent(new CustomEvent("dashboard:navigate", { detail: section }));
+    if (isNew(notification)) await markAll();
+  };
 
   return (
     <Popover>
@@ -60,11 +70,11 @@ function NotificationsBell() {
             <p className="p-6 text-center text-sm text-muted-foreground">{onlyNew ? tx("لا توجد إشعارات جديدة", "No new notifications") : tx("لا توجد إشعارات", "No notifications")}</p>
           )}
           {shown.map((n) => (
-            <div key={n.id} className={`border-b px-4 py-3 text-sm ${isNew(n) ? "border-s-2 border-s-primary bg-primary/5" : "opacity-70"}`}>
+            <button type="button" onClick={() => openNotification(n)} key={n.id} className={`block w-full border-b px-4 py-3 text-start text-sm transition hover:bg-primary/10 ${isNew(n) ? "border-s-2 border-s-primary bg-primary/5" : "opacity-70"}`}>
               <div className="font-semibold">{n.title}</div>
               {n.body && <div className="text-muted-foreground">{n.body}</div>}
               <div className="mt-1 text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</div>
-            </div>
+            </button>
           ))}
         </div>
       </PopoverContent>
