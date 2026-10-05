@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, BookOpen, CheckCircle2, CircleUserRound, GraduationCap, LayoutDashboard, Play, Sparkles, Trophy, Video, ClipboardList } from "lucide-react";
+import { BarChart3, BookOpen, CheckCircle2, CircleUserRound, GraduationCap, LayoutDashboard, LockKeyhole, Play, Sparkles, Trophy, Video, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { DashboardShell } from "@/components/site/DashboardShell";
-import { Card, db, Guard, Leaderboard, ProfileEditor, VideoPlayer } from "@/components/site/shared";
+import { Card, db, Guard, Leaderboard, ProfileEditor, QImage, VideoPlayer } from "@/components/site/shared";
 import { StudentAnalytics } from "@/components/site/Analytics";
 import { StudentLectures } from "@/components/site/StudentLectures";
 import { StudentExams } from "@/components/site/StudentExams";
@@ -20,6 +20,8 @@ export const Route = createFileRoute("/student")({
       { name: "description", content: "فيديوهات وامتحانات وتقارير الطالب على منصة Researcher." },
       { property: "og:title", content: "Student Dashboard | Researcher" },
       { property: "og:description", content: "Videos, exams and reports for students." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => (
@@ -33,6 +35,7 @@ function Student() {
   const { tx, profile, lang, session } = useApp();
   const stage = profile?.stage;
   const [tab, setTab] = useState("home");
+  useEffect(() => { const go = (event: Event) => setTab((event as CustomEvent<string>).detail); window.addEventListener("dashboard:navigate", go); return () => window.removeEventListener("dashboard:navigate", go); }, []);
   if (!stage || !session) return null;
   const items = [
     { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
@@ -42,7 +45,6 @@ function Student() {
     { value: "top", label: tx("المتصدرون", "Leaderboard"), icon: Trophy },
     { value: "me", label: tx("حسابي", "My account"), icon: CircleUserRound },
   ];
-  useEffect(() => { const go = (event: Event) => setTab((event as CustomEvent<string>).detail); window.addEventListener("dashboard:navigate", go); return () => window.removeEventListener("dashboard:navigate", go); }, []);
   return (
     <DashboardShell items={items} active={tab} onChange={setTab}>
       <Header />

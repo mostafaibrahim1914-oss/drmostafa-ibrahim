@@ -24,6 +24,8 @@ export const Route = createFileRoute("/admin")({
       { name: "description", content: "لوحة تحكم الأدمن لإدارة الطلاب والمحتوى على منصة Researcher." },
       { property: "og:title", content: "Admin Dashboard | Researcher" },
       { property: "og:description", content: "Manage students, videos, exams and codes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => (

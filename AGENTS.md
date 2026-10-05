@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Use the shared collapsible DashboardShell for student and admin workspaces so navigation stays consistent and mobile-safe.
+- Keep lectures and exams in separate feature components, while dashboard routes only compose sections; this keeps both workspaces maintainable.
