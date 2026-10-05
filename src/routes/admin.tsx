@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { BarChart3, BookOpen, KeyRound, LayoutDashboard, UserCog, Users } from "lucide-react";
+import { BarChart3, KeyRound, LayoutDashboard, UserCog, Users, Video, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { DashboardShell } from "@/components/site/DashboardShell";
@@ -13,6 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminDeleteUser, adminSetPassword } from "@/lib/admin.functions";
 import { STAGE_LABEL, STAGES, type Stage, uploadFile, useApp } from "@/lib/app-context";
+import { AdminLectures } from "@/components/site/AdminLectures";
+import { AdminExams } from "@/components/site/AdminExams";
+import { AdminPerformance } from "@/components/site/AdminPerformance";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -43,11 +46,13 @@ function Admin() {
   const items = [
     { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
     { value: "students", label: tx("الطلاب", "Students"), icon: Users },
-    { value: "content", label: tx("المحتوى", "Content"), icon: BookOpen },
+    { value: "lectures", label: tx("الوحدات والمحاضرات", "Units & lectures"), icon: Video },
     { value: "codes", label: tx("الأكواد", "Codes"), icon: KeyRound },
-    { value: "exams", label: tx("الامتحانات", "Exams"), icon: BarChart3 },
+    { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardList },
+    { value: "performance", label: tx("أداء الطلاب", "Student performance"), icon: BarChart3 },
     { value: "me", label: tx("حسابي", "Account"), icon: UserCog },
   ];
+  useEffect(() => { const go = (event: Event) => setTab((event as CustomEvent<string>).detail); window.addEventListener("dashboard:navigate", go); return () => window.removeEventListener("dashboard:navigate", go); }, []);
   return (
     <DashboardShell items={items} active={tab} onChange={setTab}>
       <Header />
@@ -56,9 +61,10 @@ function Admin() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="home"><div className="grid gap-4 md:grid-cols-2">{STAGES.map((s) => <Leaderboard key={s} stage={s} top={3} />)}</div></TabsContent>
         <TabsContent value="students"><Students /></TabsContent>
-        <TabsContent value="content"><ContentAdmin /></TabsContent>
+         <TabsContent value="lectures"><AdminLectures /></TabsContent>
         <TabsContent value="codes"><Codes /></TabsContent>
-        <TabsContent value="exams"><Exams /></TabsContent>
+         <TabsContent value="exams"><AdminExams /></TabsContent>
+         <TabsContent value="performance"><AdminPerformance /></TabsContent>
         <TabsContent value="me"><ProfileEditor /></TabsContent>
       </Tabs>
       </div>

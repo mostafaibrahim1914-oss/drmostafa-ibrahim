@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, BookOpen, CheckCircle2, CircleUserRound, Clock3, GraduationCap, LayoutDashboard, LockKeyhole, Play, Sparkles, Trophy, Video } from "lucide-react";
+import { BarChart3, BookOpen, CheckCircle2, CircleUserRound, GraduationCap, LayoutDashboard, Play, Sparkles, Trophy, Video, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { DashboardShell } from "@/components/site/DashboardShell";
-import { AttemptsReport, Card, db, Guard, Leaderboard, ProfileEditor, QImage, VideoPlayer } from "@/components/site/shared";
+import { Card, db, Guard, Leaderboard, ProfileEditor, VideoPlayer } from "@/components/site/shared";
+import { StudentAnalytics } from "@/components/site/Analytics";
+import { StudentLectures } from "@/components/site/StudentLectures";
+import { StudentExams } from "@/components/site/StudentExams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,11 +36,13 @@ function Student() {
   if (!stage || !session) return null;
   const items = [
     { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
-    { value: "content", label: tx("المحاضرات والامتحانات", "Lessons & exams"), icon: BookOpen },
+    { value: "lectures", label: tx("المحاضرات", "Lectures"), icon: Video },
+    { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardList },
     { value: "report", label: tx("تقرير الأداء", "Performance"), icon: BarChart3 },
     { value: "top", label: tx("المتصدرون", "Leaderboard"), icon: Trophy },
     { value: "me", label: tx("حسابي", "My account"), icon: CircleUserRound },
   ];
+  useEffect(() => { const go = (event: Event) => setTab((event as CustomEvent<string>).detail); window.addEventListener("dashboard:navigate", go); return () => window.removeEventListener("dashboard:navigate", go); }, []);
   return (
     <DashboardShell items={items} active={tab} onChange={setTab}>
       <Header />
@@ -45,8 +50,9 @@ function Student() {
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-bold text-primary">{STAGE_LABEL[stage][lang]}</p><h1 className="mt-1 text-3xl font-black">{tx("مرحباً،", "Welcome,")} {profile?.full_name}</h1><p className="mt-1 text-muted-foreground">{tx("جاهز تكمل رحلتك في التاريخ؟", "Ready to continue your history journey?")}</p></div><div className="flex items-center gap-3 rounded-lg border bg-card px-5 py-3"><GraduationCap className="text-primary"/><div><p className="text-xs text-muted-foreground">{tx("المستوى الحالي","Current level")}</p><p className="font-bold">{tx("باحث صاعد","Rising researcher")}</p></div></div></div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="home"><StudentHome onChooseSection={setTab} /></TabsContent>
-        <TabsContent value="content"><Content /></TabsContent>
-        <TabsContent value="report"><Card><AttemptsReport userId={session.user.id} /></Card></TabsContent>
+        <TabsContent value="lectures"><StudentLectures /></TabsContent>
+        <TabsContent value="exams"><StudentExams /></TabsContent>
+        <TabsContent value="report"><StudentAnalytics userId={session.user.id} stage={stage} /></TabsContent>
         <TabsContent value="top"><Leaderboard stage={stage} /></TabsContent>
         <TabsContent value="me"><ProfileEditor /></TabsContent>
       </Tabs>
@@ -91,7 +97,7 @@ function StudentHome({ onChooseSection }: { onChooseSection: (value: string) => 
           <p className="text-sm font-bold text-primary">{tx("استكمل من حيث توقفت", "Continue where you left off")}</p>
           <h2 className="mt-2 text-2xl font-black">{resume?.title ?? tx("ابدأ أول محاضرة", "Start your first lesson")}</h2>
           <p className="mt-2 text-sm text-secondary-foreground/60">{resume?.description || tx("محاضراتك محفوظة ومنظمة داخل وحداتك الدراسية.", "Your lessons are organized inside your study units.")}</p>
-          {!resume && <Button className="mt-5 w-fit" onClick={() => onChooseSection("content")}>{tx("اختيار محاضرة", "Choose a lesson")}</Button>}
+           {!resume && <Button className="mt-5 w-fit" onClick={() => onChooseSection("lectures")}>{tx("اختيار محاضرة", "Choose a lesson")}</Button>}
         </div>
         <div className="min-h-64 bg-background/20 p-3">{resume ? <VideoPlayer v={resume} rememberProgress /> : <div className="grid h-full min-h-60 place-items-center text-secondary-foreground/40"><BookOpen className="h-14 w-14" /></div>}</div>
       </div>
@@ -103,7 +109,7 @@ function StudentHome({ onChooseSection }: { onChooseSection: (value: string) => 
     <section>
       <h2 className="mb-4 text-xl font-black">{tx("ماذا تريد أن تفعل؟", "What would you like to do?")}</h2>
       <div className="grid gap-4 md:grid-cols-3">
-        {[{ value: "content", icon: BookOpen, title: tx("المحاضرات والامتحانات", "Lessons & exams"), desc: tx("اختر الوحدة وابدأ التعلم", "Choose a unit and start learning") }, { value: "report", icon: BarChart3, title: tx("تقرير الأداء", "Performance report"), desc: tx("راجع درجاتك ومستواك", "Review your scores and level") }, { value: "top", icon: Trophy, title: tx("المتصدرون", "Leaderboard"), desc: tx("شاهد ترتيب مرحلتك", "See your stage ranking") }].map((section) => <button key={section.value} onClick={() => onChooseSection(section.value)} className="group flex min-h-36 items-start gap-4 rounded-lg border bg-card p-5 text-start transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-gold"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-muted text-primary transition group-hover:bg-primary group-hover:text-primary-foreground"><section.icon /></div><div><h3 className="font-bold">{section.title}</h3><p className="mt-2 text-sm text-muted-foreground">{section.desc}</p></div></button>)}</div>
+         {[{ value: "lectures", icon: Video, title: tx("المحاضرات", "Lectures"), desc: tx("اختر الوحدة واستكمل التعلم", "Choose a unit and continue learning") }, { value: "exams", icon: ClipboardList, title: tx("الامتحانات", "Exams"), desc: tx("حل الاختبارات وراجع نتائجك", "Take exams and review results") }, { value: "report", icon: BarChart3, title: tx("تحليل الأداء", "Performance analysis"), desc: tx("راجع درجاتك ومستواك", "Review your scores and level") }].map((section) => <Button key={section.value} variant="outline" onClick={() => onChooseSection(section.value)} className="group h-auto min-h-36 items-start justify-start gap-4 whitespace-normal border-primary/25 bg-card p-5 text-start transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-gold"><div className="icon-tile"><section.icon /></div><div><h3 className="font-bold">{section.title}</h3><p className="mt-2 text-sm text-muted-foreground">{section.desc}</p></div></Button>)}</div>
     </section>
   </div>;
 }
