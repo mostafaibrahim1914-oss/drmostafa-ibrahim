@@ -14,11 +14,13 @@ function NotificationsBell() {
   const uid = session?.user.id ?? "";
 
   const load = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from("notifications")
       .select("id,title,body,created_at,read_by")
       .order("created_at", { ascending: false })
       .limit(100);
+    if (isAdmin) query = query.eq("audience", "admin");
+    const { data } = await query;
     setItems((data as Notif[]) ?? []);
   };
   useEffect(() => {
@@ -26,16 +28,22 @@ function NotificationsBell() {
     load();
     const t = setInterval(load, 30000);
     return () => clearInterval(t);
-  }, [uid]);
+  }, [uid, isAdmin]);
 
   const isNew = (n: Notif) => !(Array.isArray(n.read_by) && n.read_by.includes(uid));
   const unread = items.filter(isNew).length;
   const [onlyNew, setOnlyNew] = useState(true);
   const shown = onlyNew ? items.filter(isNew) : items;
   const markAll = async () => {
-    setItems((current) => current.map((item) => ({ ...item, read_by: [...(Array.isArray(item.read_by) ? item.read_by : []), uid] })));
+    const snapshot = items;
+    setItems((current) => current.map((item) => ({ ...item, read_by: Array.from(new Set([...(Array.isArray(item.read_by) ? item.read_by : []), uid])) })));
     const { error } = await supabase.rpc("mark_notifications_read");
-    if (error) await load();
+    if (error) {
+      setItems(snapshot);
+      return;
+    }
+    setOnlyNew(true);
+    await load();
   };
   const openNotification = async (notification: Notif) => {
     const text = `${notification.title} ${notification.body}`;
