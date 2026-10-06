@@ -56,6 +56,7 @@ export type Database = {
         Row: {
           answers: Json
           essay_score: number
+          essay_scores: Json
           exam_id: string
           grading_status: string
           id: string
@@ -68,6 +69,7 @@ export type Database = {
         Insert: {
           answers?: Json
           essay_score?: number
+          essay_scores?: Json
           exam_id: string
           grading_status?: string
           id?: string
@@ -80,6 +82,7 @@ export type Database = {
         Update: {
           answers?: Json
           essay_score?: number
+          essay_scores?: Json
           exam_id?: string
           grading_status?: string
           id?: string
