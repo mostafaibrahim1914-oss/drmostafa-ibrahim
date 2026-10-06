@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import eagleLogo from "@/assets/logo-eagle.png";
 
 export type Lang = "ar" | "en";
 export type Stage = "prep3" | "sec1" | "sec2" | "sec3";
@@ -15,7 +16,7 @@ export const STAGE_LABEL: Record<Stage, { ar: string; en: string }> = {
   prep3: { ar: "الصف الثالث الإعدادي", en: "3rd Preparatory" },
 };
 
-export const LOGO_URL = "/__l5e/assets-v1/1ac5ec57-2fb1-4eeb-82c9-28c4e8d19078/logo-eagle.png";
+export const LOGO_URL = eagleLogo;
 
 /** Students sign in with their WhatsApp number; it maps to an internal login id. */
 export function loginIdFromInput(input: string) {

@@ -12,3 +12,8 @@
 - [x] Group student lectures by unit with richer historical styling.
 - [x] Add essay questions with assigned marks and admin grading.
 - [ ] Prepare deployment configuration and verify all flows.
+
+- [ ] Fix notification persistence after marking all read.
+- [ ] Filter admin videos by stage with an All default.
+- [ ] Bundle the eagle logo for Vercel deployment.
+- [ ] Polish student/admin exams and grade essays per question.
