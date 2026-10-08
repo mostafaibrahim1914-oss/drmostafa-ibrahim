@@ -20,6 +20,12 @@ The imported `.env` contains the existing public Supabase connection configurati
 
 Continue using the existing Supabase project; do not replace it or migrate its database as part of environment setup.
 
+## Essay exam grading
+
+Before using essay grading, open the existing Supabase project's SQL Editor and run the contents of `supabase/migrations/20261008090000_admin_essay_grading_notifications.sql`. This migration adds the admin-only grading RPC and notification links; the current project connection does not have permission to apply database migrations. The Supabase API confirmed the new notification-link column is not yet present.
+
+After applying the migration, admins can open **Exam grading**, select a school stage and a student's submitted exam, and save essay marks. Marks must be whole numbers within each question's maximum; partial marks can be saved while other essays remain pending. Students receive the final score in their notification when every essay in the exam has been graded. Essay-submission notifications link directly to the attempt in the grading workspace.
+
 Admin password resets and account deletion additionally require `SUPABASE_SERVICE_ROLE_KEY` in Replit Secrets. This key was not supplied with the import. Never prefix it with `VITE_` or put it in browser code.
 
 The README contains an admin password from the original project brief. Treat it as exposed: rotate it in the existing authentication provider and remove it from documentation before production use.

@@ -246,6 +246,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          link_data: Json
           read_by: Json
           stage: Database["public"]["Enums"]["stage_level"] | null
           title: string
@@ -256,6 +257,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          link_data?: Json
           read_by?: Json
           stage?: Database["public"]["Enums"]["stage_level"] | null
           title: string
@@ -266,6 +268,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          link_data?: Json
           read_by?: Json
           stage?: Database["public"]["Enums"]["stage_level"] | null
           title?: string
@@ -542,6 +545,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_approved: { Args: never; Returns: boolean }
+      grade_attempt_essays: {
+        Args: { _attempt_id: string; _essay_scores: Json }
+        Returns: Json
+      }
       leaderboard: {
         Args: { _stage: Database["public"]["Enums"]["stage_level"] }
         Returns: {
@@ -554,6 +561,7 @@ export type Database = {
         }[]
       }
       mark_notifications_read: { Args: never; Returns: undefined }
+      mark_notification_read: { Args: { _notification_id: string }; Returns: undefined }
       my_stage: {
         Args: never
         Returns: Database["public"]["Enums"]["stage_level"]
