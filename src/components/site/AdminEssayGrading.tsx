@@ -215,10 +215,42 @@ export function AdminEssayGrading({
       );
 
     setSaving(true);
-    const { data, error } = await db.rpc("grade_attempt_essays", {
+    const rpcResult = await db.rpc("grade_attempt_essays", {
       _attempt_id: selected.id,
       _essay_scores: essayScores,
     });
+    let data = rpcResult.data;
+    let error = rpcResult.error;
+    const errorMessage = String(error?.message ?? "").toLowerCase();
+    const missingGradingFunction =
+      error?.code === "PGRST202" ||
+      (errorMessage.includes("grade_attempt_essays") && errorMessage.includes("schema cache"));
+
+    if (missingGradingFunction) {
+      const essayScore = Object.values(essayScores).reduce((sum, mark) => sum + mark, 0);
+      const gradingStatus =
+        Object.keys(essayScores).length === questions.length ? "graded" : "pending";
+      const directResult = await db
+        .from("attempts")
+        .update({
+          essay_scores: essayScores,
+          essay_score: essayScore,
+          score: selected.objective_score + essayScore,
+          grading_status: gradingStatus,
+        })
+        .eq("id", selected.id)
+        .select("score,total,grading_status")
+        .single();
+      data = directResult.data
+        ? {
+            ok: true,
+            score: directResult.data.score,
+            total: directResult.data.total,
+            grading_status: directResult.data.grading_status,
+          }
+        : null;
+      error = directResult.error;
+    }
     setSaving(false);
     if (error || !data?.ok) {
       toast.error(error?.message ?? tx("تعذر حفظ الدرجات.", "Could not save the marks."));
