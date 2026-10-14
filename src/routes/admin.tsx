@@ -192,8 +192,25 @@ function Students() {
   const list = rows.filter(
     (r) => tab === "all" || (tab === "pending" ? r.status === "pending" : r.stage === tab),
   );
+  const stageCounts = Object.fromEntries(
+    STAGES.map((stage) => [stage, rows.filter((student) => student.stage === stage).length]),
+  ) as Record<Stage, number>;
   return (
     <Card>
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+        {[
+          [tx("كل الطلاب", "All students"), rows.length],
+          ...STAGES.map((stage) => [STAGE_LABEL[stage][lang], stageCounts[stage]]),
+        ].map(([label, count]) => (
+          <div
+            key={label}
+            className="flex items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
+          >
+            <span className="text-sm font-medium text-muted-foreground">{label}</span>
+            <span className="text-xl font-black text-primary">{count}</span>
+          </div>
+        ))}
+      </div>
       <div className="mb-4 flex flex-wrap gap-2">
         {[
           [
