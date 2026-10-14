@@ -276,11 +276,15 @@ function Students() {
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{view?.full_name}</DialogTitle>
+            <DialogTitle>
+              <span className="flex items-center gap-3">
+                <Avatar path={view?.avatar_url} size={40} />
+                <span>{view?.full_name}</span>
+              </span>
+            </DialogTitle>
           </DialogHeader>
           {view && (
             <div className="space-y-1 text-sm">
-              <Avatar path={view.avatar_url} size={64} />
               <p>
                 {tx("واتساب", "WhatsApp")}: {view.whatsapp}
               </p>

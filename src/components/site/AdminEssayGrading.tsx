@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCheck, ClipboardCheck, Clock3, FileSearch, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { Card, db, QImage } from "@/components/site/shared";
+import { Avatar, Card, db, QImage } from "@/components/site/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { STAGES, STAGE_LABEL, type Stage, useApp } from "@/lib/app-context";
@@ -357,13 +357,16 @@ export function AdminEssayGrading({
                 className={`w-full rounded-lg border p-3 text-start transition hover:border-primary/70 hover:bg-primary/5 ${selectedId === attempt.id ? "border-primary bg-primary/10 shadow-gold" : "border-border/70"}`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-bold">
-                      {student?.full_name ?? tx("طالب", "Student")}
-                    </p>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {attempt.exams?.title ?? tx("امتحان", "Exam")}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar path={student?.avatar_url} size={36} />
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">
+                        {student?.full_name ?? tx("طالب", "Student")}
+                      </p>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {attempt.exams?.title ?? tx("امتحان", "Exam")}
+                      </p>
+                    </div>
                   </div>
                   {attempt.grading_status === "pending" ? (
                     <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
@@ -409,14 +412,17 @@ export function AdminEssayGrading({
           {selected && (
             <div className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-primary">
-                    {students[selected.user_id]?.full_name}
-                  </p>
-                  <h3 className="mt-1 text-lg font-black">{selected.exams?.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {tx("الدرجة الحالية", "Current score")}: {selected.score}/{selected.total}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <Avatar path={students[selected.user_id]?.avatar_url} size={44} />
+                  <div>
+                    <p className="text-sm font-bold text-primary">
+                      {students[selected.user_id]?.full_name}
+                    </p>
+                    <h3 className="mt-1 text-lg font-black">{selected.exams?.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {tx("الدرجة الحالية", "Current score")}: {selected.score}/{selected.total}
+                    </p>
+                  </div>
                 </div>
                 {selected.grading_status === "graded" && (
                   <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-bold text-emerald-600">

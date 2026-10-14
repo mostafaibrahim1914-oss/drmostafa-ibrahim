@@ -4,7 +4,7 @@ import { BarChart3, BookOpen, CheckCircle2, CircleUserRound, GraduationCap, Layo
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { DashboardShell } from "@/components/site/DashboardShell";
-import { Card, db, Guard, Leaderboard, ProfileEditor, QImage, VideoPlayer } from "@/components/site/shared";
+import { Avatar, Card, db, Guard, Leaderboard, ProfileEditor, QImage, VideoPlayer } from "@/components/site/shared";
 import { StudentAnalytics } from "@/components/site/Analytics";
 import { StudentLectures } from "@/components/site/StudentLectures";
 import { StudentExams } from "@/components/site/StudentExams";
@@ -49,7 +49,7 @@ function Student() {
     <DashboardShell items={items} active={tab} onChange={setTab}>
       <Header />
       <div className="mx-auto max-w-7xl px-4 py-8 pb-24">
-      <div className="mb-7 flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-bold text-primary">{STAGE_LABEL[stage][lang]}</p><h1 className="mt-1 text-3xl font-black">{tx("مرحباً،", "Welcome,")} {profile?.full_name}</h1><p className="mt-1 text-muted-foreground">{tx("جاهز تكمل رحلتك في التاريخ؟", "Ready to continue your history journey?")}</p></div><div className="flex items-center gap-3 rounded-lg border bg-card px-5 py-3"><GraduationCap className="text-primary"/><div><p className="text-xs text-muted-foreground">{tx("المستوى الحالي","Current level")}</p><p className="font-bold">{tx("باحث صاعد","Rising researcher")}</p></div></div></div>
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-bold text-primary">{STAGE_LABEL[stage][lang]}</p><div className="mt-1 flex items-center gap-3"><Avatar path={profile?.avatar_url} size={44} /><h1 className="text-3xl font-black">{tx("مرحباً،", "Welcome,")} {profile?.full_name}</h1></div><p className="mt-1 text-muted-foreground">{tx("جاهز تكمل رحلتك في التاريخ؟", "Ready to continue your history journey?")}</p></div><div className="flex items-center gap-3 rounded-lg border bg-card px-5 py-3"><GraduationCap className="text-primary"/><div><p className="text-xs text-muted-foreground">{tx("المستوى الحالي","Current level")}</p><p className="font-bold">{tx("باحث صاعد","Rising researcher")}</p></div></div></div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsContent value="home"><StudentHome onChooseSection={setTab} /></TabsContent>
         <TabsContent value="lectures"><StudentLectures /></TabsContent>

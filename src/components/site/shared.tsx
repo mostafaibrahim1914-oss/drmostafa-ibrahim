@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { STAGE_LABEL, type Stage, uploadFile, useApp, useSignedUrl } from "@/lib/app-context";
+import { LOGO_URL, STAGE_LABEL, type Stage, uploadFile, useApp, useSignedUrl } from "@/lib/app-context";
 
 export const db = supabase as any;
 
@@ -18,7 +18,11 @@ export function Avatar({ path, size = 48 }: { path?: string | null; size?: numbe
   const url = useSignedUrl("avatars", path);
   return (
     <div className="shrink-0 overflow-hidden rounded-full bg-muted ring-2 ring-primary/40" style={{ width: size, height: size }}>
-      {url && <img src={url} alt="" className="h-full w-full object-cover" />}
+      <img
+        src={url ?? LOGO_URL}
+        alt=""
+        className={`h-full w-full ${url ? "object-cover" : "object-contain p-1"}`}
+      />
     </div>
   );
 }
