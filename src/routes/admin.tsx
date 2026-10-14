@@ -34,6 +34,7 @@ import { AdminLectures } from "@/components/site/AdminLectures";
 import { AdminExams } from "@/components/site/AdminExams";
 import { AdminPerformance } from "@/components/site/AdminPerformance";
 import { AdminEssayGrading } from "@/components/site/AdminEssayGrading";
+import { AdminRevenueAnalytics } from "@/components/site/AdminRevenueAnalytics";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -134,6 +135,7 @@ function Admin() {
         </div>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsContent value="home">
+            <AdminRevenueAnalytics />
             <div className="grid gap-4 md:grid-cols-2">
               {STAGES.map((s) => (
                 <Leaderboard key={s} stage={s} top={3} />
