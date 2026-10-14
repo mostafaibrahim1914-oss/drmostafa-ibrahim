@@ -3,7 +3,7 @@
 ## Running on Replit
 
 - Keep the imported React 19, TanStack Start, Vite 8, and Supabase stack and existing project structure.
-- Runtime: Node.js 22 and Bun 1.3.
+- Runtime: Node.js 20.20 and Bun 1.3 (configured in `.replit`).
 - Dependencies: `bun install` (use the existing `bun.lock`).
 - Click **Run** to start the `Start application` workflow, which runs `bun run dev`.
 - The development server listens on `0.0.0.0:5000` and accepts Replit preview hosts.
@@ -32,8 +32,9 @@ The README contains an admin password from the original project brief. Treat it 
 
 ## Setup verification
 
-- Production build completed successfully.
+- Dependencies installed from the existing package manifest and lockfile; no application code or database changes were needed.
+- Production build completed successfully with existing non-blocking deprecation warnings.
 - Home page visually checked in Replit preview with no browser errors.
-- Sign-in route returned HTTP 200.
-- Existing Supabase authentication settings endpoint returned HTTP 200.
+- Sign-in route returned HTTP 200 through the Replit development domain.
+- Supabase connectivity was reported by the previous setup notes, but was not independently rechecked during this setup.
 - Signed-in student/admin dashboards and privileged admin actions were not verified; no account data was changed.
