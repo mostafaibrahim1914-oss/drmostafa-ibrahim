@@ -32,9 +32,11 @@ The README contains an admin password from the original project brief. Treat it 
 
 ## Setup verification
 
-- Dependencies installed from the existing package manifest and lockfile; no application code or database changes were needed.
+- Dependencies installed with `bun install --frozen-lockfile` from the existing package manifest and lockfile; no application code or database changes were needed.
 - Production build completed successfully with existing non-blocking deprecation warnings.
 - Home page visually checked in Replit preview with no browser errors.
 - Sign-in route returned HTTP 200 through the Replit development domain.
 - Supabase connectivity was reported by the previous setup notes, but was not independently rechecked during this setup.
 - Signed-in student/admin dashboards and privileged admin actions were not verified; no account data was changed.
+- Rechecked on 2026-10-17: the existing workflow runs successfully, both `/` and `/auth` return HTTP 200 through the Replit development domain, and the home page renders without browser errors.
+- Existing non-blocking warnings include deprecated TanStack input validators, redundant TypeScript path resolution, and upcoming removal of Node.js 20 support by Supabase.
