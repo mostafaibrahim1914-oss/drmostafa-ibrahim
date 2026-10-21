@@ -20,7 +20,10 @@ type EssayQuestion = {
   question_type: string;
   points: number;
   q_order: number;
+  options: string[];
+  correct_index: number;
 };
+type StageExam = { id: string; title: string };
 type SubmissionAttempt = {
   id: string;
   exam_id: string;
@@ -47,6 +50,7 @@ export function AdminEssayGrading({
   const [stage, setStage] = useState<Stage>(focusAttempt?.stage ?? "sec1");
   const [attempts, setAttempts] = useState<SubmissionAttempt[]>([]);
   const [students, setStudents] = useState<Record<string, StudentProfile>>({});
+  const [stageExams, setStageExams] = useState<StageExam[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<EssayQuestion[]>([]);
   const [scores, setScores] = useState<Record<string, string>>({});
@@ -60,8 +64,6 @@ export function AdminEssayGrading({
 
   const loadAttempts = useCallback(async () => {
     setLoading(true);
-    setSelectedId(null);
-    setQuestions([]);
     const { data: profiles, error: profileError } = await db
       .from("profiles")
       .select("id,full_name,stage,avatar_url")
@@ -73,12 +75,27 @@ export function AdminEssayGrading({
       toast.error(profileError.message);
       setAttempts([]);
       setStudents({});
+      setStageExams([]);
       setLoading(false);
       return;
     }
 
     const profileRows = (profiles ?? []) as StudentProfile[];
     setStudents(Object.fromEntries(profileRows.map((profile) => [profile.id, profile])));
+    const { data: exams, error: examError } = await db
+      .from("exams")
+      .select("id,title")
+      .eq("stage", stage)
+      .order("created_at", { ascending: true });
+    if (examError) {
+      toast.error(examError.message);
+      setAttempts([]);
+      setStageExams([]);
+      setLoading(false);
+      return;
+    }
+    const examRows = (exams ?? []) as StageExam[];
+    setStageExams(examRows);
     const userIds = profileRows.map((profile) => profile.id);
     if (!userIds.length) {
       setAttempts([]);
@@ -86,18 +103,7 @@ export function AdminEssayGrading({
       return;
     }
 
-    const { data: exams, error: examError } = await db
-      .from("exams")
-      .select("id")
-      .eq("stage", stage);
-    if (examError) {
-      toast.error(examError.message);
-      setAttempts([]);
-      setLoading(false);
-      return;
-    }
-
-    const examIds = (exams ?? []).map((exam: { id: string }) => exam.id);
+    const examIds = examRows.map((exam) => exam.id);
     if (!examIds.length) {
       setAttempts([]);
       setLoading(false);
@@ -154,7 +160,7 @@ export function AdminEssayGrading({
     Promise.all([
       db
         .from("questions")
-        .select("id,prompt,image_url,question_type,points,q_order")
+        .select("id,prompt,image_url,question_type,points,q_order,options,correct_index")
         .eq("exam_id", selected.exam_id)
         .order("q_order"),
       db.from("attempts").select("essay_scores").eq("id", selected.id).maybeSingle(),
@@ -164,11 +170,10 @@ export function AdminEssayGrading({
         toast.error(questionResult.error.message);
         return;
       }
-      const essayQuestions = ((questionResult.data ?? []) as EssayQuestion[]).filter(
-        (question) => question.question_type === "essay",
-      );
+      const questionRows = (questionResult.data ?? []) as EssayQuestion[];
+      const essayQuestions = questionRows.filter((question) => question.question_type === "essay");
       const saved = (attemptResult.data?.essay_scores ?? {}) as Record<string, number>;
-      setQuestions(essayQuestions);
+      setQuestions(questionRows);
       setScores(
         Object.fromEntries(
           essayQuestions
@@ -193,9 +198,11 @@ export function AdminEssayGrading({
   }, [focusAttempt, loading, attempts, onFocusHandled]);
 
   const saveGrades = async () => {
-    if (!selected || !questions.length) return;
+    if (!selected) return;
+    const essayQuestions = questions.filter((question) => question.question_type === "essay");
+    if (!essayQuestions.length) return;
     const essayScores: Record<string, number> = {};
-    for (const question of questions) {
+    for (const question of essayQuestions) {
       const value = scores[question.id];
       if (value === undefined || value.trim() === "") continue;
       const mark = Number(value);
@@ -229,7 +236,7 @@ export function AdminEssayGrading({
     if (missingGradingFunction) {
       const essayScore = Object.values(essayScores).reduce((sum, mark) => sum + mark, 0);
       const gradingStatus =
-        Object.keys(essayScores).length === questions.length ? "graded" : "pending";
+        Object.keys(essayScores).length === essayQuestions.length ? "graded" : "pending";
       const directResult = await db
         .from("attempts")
         .update({
@@ -271,6 +278,22 @@ export function AdminEssayGrading({
   };
 
   const pendingCount = attempts.filter((attempt) => attempt.grading_status === "pending").length;
+  const studentAttempts = useMemo(() => {
+    const grouped = new Map<string, Map<string, SubmissionAttempt>>();
+    for (const attempt of attempts) {
+      const examMap = grouped.get(attempt.user_id) ?? new Map<string, SubmissionAttempt>();
+      examMap.set(attempt.exam_id, attempt);
+      grouped.set(attempt.user_id, examMap);
+    }
+    return grouped;
+  }, [attempts]);
+  const studentRoster = useMemo(
+    () =>
+      Object.values(students).sort((a, b) =>
+        a.full_name.localeCompare(b.full_name, lang === "ar" ? "ar" : "en"),
+      ),
+    [students, lang],
+  );
 
   return (
     <div className="space-y-5">
@@ -334,7 +357,7 @@ export function AdminEssayGrading({
               {tx("جارٍ تحميل التسليمات…", "Loading submissions…")}
             </p>
           )}
-          {!loading && visibleAttempts.length === 0 && (
+          {!loading && (showAll ? studentRoster.length === 0 : visibleAttempts.length === 0) && (
             <p className="py-6 text-center text-sm text-muted-foreground">
               {showAll
                 ? tx(
@@ -347,52 +370,136 @@ export function AdminEssayGrading({
                   )}
             </p>
           )}
-          {visibleAttempts.map((attempt) => {
-            const student = students[attempt.user_id];
-            return (
-              <button
-                type="button"
-                key={attempt.id}
-                onClick={() => setSelectedId(attempt.id)}
-                className={`w-full rounded-lg border p-3 text-start transition hover:border-primary/70 hover:bg-primary/5 ${selectedId === attempt.id ? "border-primary bg-primary/10 shadow-gold" : "border-border/70"}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Avatar path={student?.avatar_url} size={36} />
-                    <div className="min-w-0">
-                      <p className="truncate font-bold">
-                        {student?.full_name ?? tx("طالب", "Student")}
-                      </p>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
-                        {attempt.exams?.title ?? tx("امتحان", "Exam")}
-                      </p>
+          {showAll ? (
+            <div className="space-y-3">
+              {studentRoster.map((student, index) => {
+                const submitted = studentAttempts.get(student.id) ?? new Map();
+                const submittedCount = stageExams.reduce(
+                  (count, exam) => count + Number(submitted.has(exam.id)),
+                  0,
+                );
+                const completedAll = stageExams.length > 0 && submittedCount === stageExams.length;
+                return (
+                  <section
+                    key={student.id}
+                    className="rounded-xl border border-border/70 p-3"
+                    aria-label={`${index + 1}. ${student.full_name}`}
+                  >
+                    <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-black text-primary">
+                        {index + 1}
+                      </span>
+                      <Avatar path={student.avatar_url} size={32} />
+                      <span className="min-w-0 flex-1 truncate font-bold">{student.full_name}</span>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${completedAll ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}
+                      >
+                        {stageExams.length
+                          ? `${submittedCount}/${stageExams.length} ${tx("امتحان", "exams")}`
+                          : tx("لا توجد امتحانات", "No exams")}
+                        {stageExams.length > 0 &&
+                          (completedAll
+                            ? ` · ${tx("أكمل الكل", "All done")}`
+                            : ` · ${tx("لم يكمل", "Incomplete")}`)}
+                      </span>
                     </div>
-                  </div>
-                  {attempt.grading_status === "pending" ? (
-                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
-                      <Clock3 className="h-3.5 w-3.5" />
-                      {tx("معلّق", "Pending")}
-                    </span>
-                  ) : (
-                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-600">
-                      <CheckCheck className="h-3.5 w-3.5" />
-                      {tx("مكتمل", "Complete")}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 flex justify-between gap-2 text-xs text-muted-foreground">
-                  <span>
-                    {new Date(attempt.submitted_at).toLocaleString(
-                      lang === "ar" ? "ar-EG" : "en-US",
+                    {stageExams.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {stageExams.map((exam) => {
+                          const attempt = submitted.get(exam.id);
+                          const isSelected = attempt?.id === selectedId;
+                          return (
+                            <button
+                              key={exam.id}
+                              type="button"
+                              disabled={!attempt}
+                              onClick={() => attempt && setSelectedId(attempt.id)}
+                              aria-label={
+                                attempt
+                                  ? `${exam.title} — ${student.full_name}, ${attempt.score}/${attempt.total}`
+                                  : `${exam.title} — ${student.full_name}, ${tx("لم يمتحن", "Not taken")}`
+                              }
+                              title={exam.title}
+                              className={`max-w-36 rounded-md border px-2.5 py-1.5 text-start text-xs font-semibold transition ${
+                                isSelected
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : attempt
+                                    ? attempt.grading_status === "pending"
+                                      ? "border-primary/40 bg-primary/10 text-primary hover:border-primary"
+                                      : "border-emerald-500/30 bg-emerald-500/5 text-foreground hover:border-emerald-500/70"
+                                    : "cursor-not-allowed border-border/50 bg-muted/40 text-muted-foreground/70"
+                              }`}
+                            >
+                              <span className="block truncate">{exam.title}</span>
+                              <span className="mt-0.5 block font-normal opacity-80">
+                                {attempt
+                                  ? `${attempt.score}/${attempt.total}`
+                                  : tx("لم يمتحن", "Not taken")}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {tx(
+                          "لم يتم إنشاء امتحانات لهذه المرحلة بعد.",
+                          "No exams have been created for this stage.",
+                        )}
+                      </p>
                     )}
-                  </span>
-                  <span className="font-bold text-foreground">
-                    {attempt.score}/{attempt.total}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+                  </section>
+                );
+              })}
+            </div>
+          ) : (
+            visibleAttempts.map((attempt) => {
+              const student = students[attempt.user_id];
+              return (
+                <button
+                  type="button"
+                  key={attempt.id}
+                  onClick={() => setSelectedId(attempt.id)}
+                  className={`w-full rounded-lg border p-3 text-start transition hover:border-primary/70 hover:bg-primary/5 ${selectedId === attempt.id ? "border-primary bg-primary/10 shadow-gold" : "border-border/70"}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar path={student?.avatar_url} size={36} />
+                      <div className="min-w-0">
+                        <p className="truncate font-bold">
+                          {student?.full_name ?? tx("طالب", "Student")}
+                        </p>
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          {attempt.exams?.title ?? tx("امتحان", "Exam")}
+                        </p>
+                      </div>
+                    </div>
+                    {attempt.grading_status === "pending" ? (
+                      <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        {tx("معلّق", "Pending")}
+                      </span>
+                    ) : (
+                      <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-600">
+                        <CheckCheck className="h-3.5 w-3.5" />
+                        {tx("مكتمل", "Complete")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex justify-between gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {new Date(attempt.submitted_at).toLocaleString(
+                        lang === "ar" ? "ar-EG" : "en-US",
+                      )}
+                    </span>
+                    <span className="font-bold text-foreground">
+                      {attempt.score}/{attempt.total}
+                    </span>
+                  </div>
+                </button>
+              );
+            })
+          )}
         </Card>
 
         <Card className="min-h-64">
@@ -432,59 +539,85 @@ export function AdminEssayGrading({
               </div>
               {!questions.length && (
                 <p className="text-sm text-muted-foreground">
-                  {tx("لا توجد أسئلة مقالية في هذا الامتحان.", "This exam has no essay questions.")}
+                  {tx("لا توجد أسئلة في هذا الامتحان.", "This exam has no questions.")}
                 </p>
               )}
-              {questions.map((question, index) => (
-                <div
-                  key={question.id}
-                  className="space-y-3 rounded-lg border border-primary/20 bg-background/60 p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="font-bold">
-                      {index + 1}. {question.prompt}
-                    </h4>
-                    <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
-                      {tx("الدرجة الكاملة", "Maximum")}: {question.points}
-                    </span>
-                  </div>
-                  <QImage path={question.image_url} />
-                  <div>
-                    <p className="mb-1 text-xs font-bold text-muted-foreground">
-                      {tx("إجابة الطالب", "Student answer")}
-                    </p>
-                    <div className="min-h-20 whitespace-pre-wrap rounded-md border bg-card p-3 text-sm leading-7">
-                      {String(selected.answers?.[question.id] ?? "").trim() ||
-                        tx("لم يكتب الطالب إجابة.", "The student left this answer blank.")}
+              {questions.map((question, index) => {
+                const answer = selected.answers?.[question.id];
+                const selectedOption =
+                  answer !== undefined && answer !== null && answer !== ""
+                    ? question.options?.[Number(answer)]
+                    : undefined;
+                return (
+                  <div
+                    key={question.id}
+                    className="space-y-3 rounded-lg border border-primary/20 bg-background/60 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-bold">
+                        {index + 1}. {question.prompt}
+                      </h4>
+                      <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
+                        {tx("الدرجة الكاملة", "Maximum")}: {question.points}
+                      </span>
                     </div>
+                    <QImage path={question.image_url} />
+                    {question.question_type === "essay" ? (
+                      <>
+                        <div>
+                          <p className="mb-1 text-xs font-bold text-muted-foreground">
+                            {tx("إجابة الطالب", "Student answer")}
+                          </p>
+                          <div className="min-h-20 whitespace-pre-wrap rounded-md border bg-card p-3 text-sm leading-7">
+                            {String(selected.answers?.[question.id] ?? "").trim() ||
+                              tx("لم يكتب الطالب إجابة.", "The student left this answer blank.")}
+                          </div>
+                        </div>
+                        <div className="flex max-w-xs items-center gap-3">
+                          <label
+                            htmlFor={`essay-score-${question.id}`}
+                            className="shrink-0 text-sm font-semibold"
+                          >
+                            {tx("درجة الطالب", "Mark")}
+                          </label>
+                          <Input
+                            id={`essay-score-${question.id}`}
+                            type="number"
+                            inputMode="numeric"
+                            min="0"
+                            max={question.points}
+                            step="1"
+                            value={scores[question.id] ?? ""}
+                            onChange={(event) =>
+                              setScores((current) => ({
+                                ...current,
+                                [question.id]: event.target.value,
+                              }))
+                            }
+                            placeholder={`0 – ${question.points}`}
+                          />
+                          <span className="shrink-0 text-sm text-muted-foreground">
+                            / {question.points}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <p className="font-bold text-muted-foreground">
+                          {tx("إجابة الطالب", "Student answer")}:{" "}
+                          {selectedOption ?? tx("لم يختر إجابة.", "No answer selected.")}
+                        </p>
+                        <p className="font-semibold text-emerald-600">
+                          {tx("الإجابة الصحيحة", "Correct answer")}:{" "}
+                          {question.options?.[question.correct_index] ??
+                            tx("غير متاحة", "Unavailable")}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex max-w-xs items-center gap-3">
-                    <label
-                      htmlFor={`essay-score-${question.id}`}
-                      className="shrink-0 text-sm font-semibold"
-                    >
-                      {tx("درجة الطالب", "Mark")}
-                    </label>
-                    <Input
-                      id={`essay-score-${question.id}`}
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max={question.points}
-                      step="1"
-                      value={scores[question.id] ?? ""}
-                      onChange={(event) =>
-                        setScores((current) => ({ ...current, [question.id]: event.target.value }))
-                      }
-                      placeholder={`0 – ${question.points}`}
-                    />
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      / {question.points}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {!!questions.length && (
+                );
+              })}
+              {questions.some((question) => question.question_type === "essay") && (
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-4">
                   <p className="max-w-lg text-xs text-muted-foreground">
                     {tx(
