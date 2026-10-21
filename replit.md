@@ -20,6 +20,12 @@ The imported `.env` contains the existing public Supabase connection configurati
 
 Continue using the existing Supabase project; do not replace it or migrate its database as part of environment setup.
 
+### Timed exams
+
+Before creating or editing exams with a time limit, run `supabase/migrations/20261021090000_add_exam_duration_minutes.sql` in the existing Supabase project's SQL Editor. The Replit database connection does not have permission to apply migrations. A blank duration means the exam has no countdown.
+
+The student countdown starts on first open; its start time and latest answers are kept in that student's browser storage so reloading the page does not reset the timer or discard answers. Deadline submission still depends on the browser being able to call the existing `submit_attempt` RPC; this client-side timer is not server-enforced.
+
 ## Essay exam grading
 
 Before using essay grading, open the existing Supabase project's SQL Editor and run the contents of `supabase/migrations/20261008090000_admin_essay_grading_notifications.sql`. This migration adds the admin-only grading RPC and notification links; the current project connection does not have permission to apply database migrations. The Supabase API confirmed the new notification-link column is not yet present.
