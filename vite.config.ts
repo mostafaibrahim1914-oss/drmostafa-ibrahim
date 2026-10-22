@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(publicUrl),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(publicKey),
+      "process.env.SUPABASE_URL": JSON.stringify(publicUrl),
+      "process.env.SUPABASE_PUBLISHABLE_KEY": JSON.stringify(publicKey),
     },
     server: {
       host: "0.0.0.0",
