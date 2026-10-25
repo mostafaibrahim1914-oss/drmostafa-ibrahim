@@ -10,6 +10,7 @@ import {
   Users,
   Video,
   ClipboardList,
+  CircleDollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
@@ -28,15 +29,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { adminDeleteUser, adminSetPassword } from "@/lib/admin.functions";
+import { adminSetPassword } from "@/lib/admin.functions";
 import { STAGE_LABEL, STAGES, type Stage, uploadFile, useApp } from "@/lib/app-context";
 import { AdminLectures } from "@/components/site/AdminLectures";
 import { AdminExams } from "@/components/site/AdminExams";
 import { AdminPerformance } from "@/components/site/AdminPerformance";
 import { AdminEssayGrading } from "@/components/site/AdminEssayGrading";
 import { AdminRevenueAnalytics } from "@/components/site/AdminRevenueAnalytics";
+import { AdminAccounts } from "@/components/site/AdminAccounts";
 
 export const Route = createFileRoute("/admin")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "لوحة التحكم | Researcher" },
@@ -89,6 +92,7 @@ function Admin() {
     { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardList },
     { value: "grading", label: tx("تصحيح الامتحانات", "Exam grading"), icon: ClipboardCheck },
     { value: "performance", label: tx("أداء الطلاب", "Student performance"), icon: BarChart3 },
+    { value: "accounts", label: tx("الحسابات", "Accounts"), icon: CircleDollarSign },
     { value: "me", label: tx("حسابي", "Account"), icon: UserCog },
   ];
   useEffect(() => {
@@ -160,6 +164,9 @@ function Admin() {
           <TabsContent value="performance">
             <AdminPerformance />
           </TabsContent>
+          <TabsContent value="accounts">
+            <AdminAccounts />
+          </TabsContent>
           <TabsContent value="me">
             <ProfileEditor />
           </TabsContent>
@@ -175,7 +182,6 @@ function Students() {
   const [tab, setTab] = useState<string>("pending");
   const [view, setView] = useState<any>(null);
   const setPw = useServerFn(adminSetPassword);
-  const del = useServerFn(adminDeleteUser);
   const load = async () => {
     const [{ data: p }, { data: r }] = await Promise.all([
       db.from("profiles").select("*").order("created_at", { ascending: false }),
@@ -281,7 +287,10 @@ function Students() {
             onClick={async () => {
               if (!confirm(tx("طرد الطالب نهائياً؟", "Remove student?"))) return;
               try {
-                await del({ data: { userId: s.id } });
+                const { error } = await db.rpc("admin_delete_student", {
+                  _user_id: s.id,
+                });
+                if (error) throw error;
                 load();
               } catch (e: any) {
                 toast.error(e.message);

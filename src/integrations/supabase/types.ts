@@ -46,9 +46,37 @@ export type Database = {
           },
         ];
       };
+      attendance_sessions: {
+        Row: {
+          attendance_date: string;
+          attendee_count: number;
+          created_at: string;
+          id: string;
+          price_per_student: number;
+          stage: string;
+        };
+        Insert: {
+          attendance_date?: string;
+          attendee_count: number;
+          created_at?: string;
+          id?: string;
+          price_per_student: number;
+          stage: string;
+        };
+        Update: {
+          attendance_date?: string;
+          attendee_count?: number;
+          created_at?: string;
+          id?: string;
+          price_per_student?: number;
+          stage?: string;
+        };
+        Relationships: [];
+      };
       attempts: {
         Row: {
           answers: Json;
+          cheating_detected: boolean;
           essay_score: number;
           essay_scores: Json;
           exam_id: string;
@@ -62,6 +90,7 @@ export type Database = {
         };
         Insert: {
           answers?: Json;
+          cheating_detected?: boolean;
           essay_score?: number;
           essay_scores?: Json;
           exam_id: string;
@@ -75,6 +104,7 @@ export type Database = {
         };
         Update: {
           answers?: Json;
+          cheating_detected?: boolean;
           essay_score?: number;
           essay_scores?: Json;
           exam_id?: string;
@@ -95,6 +125,74 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      private_groups: {
+        Row: { created_at: string; id: string; name: string };
+        Insert: { created_at?: string; id?: string; name: string };
+        Update: { created_at?: string; id?: string; name?: string };
+        Relationships: [];
+      };
+      private_payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          group_id: string | null;
+          id: string;
+          payment_date: string;
+          student_id: string | null;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          group_id?: string | null;
+          id?: string;
+          payment_date?: string;
+          student_id?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          group_id?: string | null;
+          id?: string;
+          payment_date?: string;
+          student_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "private_payments_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "private_students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "private_payments_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "private_groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      private_students: {
+        Row: { created_at: string; full_name: string; group_id: string; id: string };
+        Insert: { created_at?: string; full_name: string; group_id: string; id?: string };
+        Update: { created_at?: string; full_name?: string; group_id?: string; id?: string };
+        Relationships: [
+          {
+            foreignKeyName: "private_students_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "private_groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      stage_lesson_prices: {
+        Row: { price_per_lesson: number; stage: string; updated_at: string };
+        Insert: { price_per_lesson?: number; stage: string; updated_at?: string };
+        Update: { price_per_lesson?: number; stage?: string; updated_at?: string };
+        Relationships: [];
       };
       center_grades: {
         Row: {
@@ -490,6 +588,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_delete_student: {
+        Args: { _user_id: string };
+        Returns: undefined;
+      };
       generate_access_codes: {
         Args: { _count: number; _video_id: string };
         Returns: {
@@ -565,7 +667,7 @@ export type Database = {
       };
       redeem_code: { Args: { _code: string; _video_id: string }; Returns: Json };
       submit_attempt: {
-        Args: { _answers: Json; _exam_id: string };
+        Args: { _answers: Json; _exam_id: string; _is_cheating?: boolean };
         Returns: Json;
       };
     };
