@@ -1,6 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, BookOpen, CheckCircle2, CircleUserRound, GraduationCap, LayoutDashboard, LockKeyhole, Play, Sparkles, Trophy, Video, ClipboardList } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  CheckCircle2,
+  CircleUserRound,
+  ClipboardCheck,
+  ClipboardList,
+  Clapperboard,
+  GraduationCap,
+  LayoutDashboard,
+  LockKeyhole,
+  Play,
+  Sparkles,
+  Trophy,
+  Video,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
 import { DashboardShell } from "@/components/site/DashboardShell";
@@ -39,8 +54,8 @@ function Student() {
   if (!stage || !session) return null;
   const items = [
     { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
-    { value: "lectures", label: tx("المحاضرات", "Lectures"), icon: Video },
-    { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardList },
+    { value: "lectures", label: tx("المحاضرات", "Lectures"), icon: Clapperboard },
+    { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardCheck },
     { value: "report", label: tx("تقرير الأداء", "Performance"), icon: BarChart3 },
     { value: "top", label: tx("المتصدرون", "Leaderboard"), icon: Trophy },
     { value: "me", label: tx("حسابي", "My account"), icon: CircleUserRound },

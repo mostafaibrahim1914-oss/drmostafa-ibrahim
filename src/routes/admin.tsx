@@ -2,15 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 import {
-  BarChart3,
+  BadgeDollarSign,
+  ChartNoAxesCombined,
+  Clapperboard,
   ClipboardCheck,
-  KeyRound,
-  LayoutDashboard,
-  UserCog,
-  Users,
-  Video,
   ClipboardList,
-  CircleDollarSign,
+  KeyRound,
+  PanelsTopLeft,
+  UsersRound,
+  UserRoundCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/site/Header";
@@ -85,15 +85,19 @@ function Admin() {
   );
   const clearGradingTarget = useCallback(() => setGradingTarget(null), []);
   const items = [
-    { value: "home", label: tx("الرئيسية", "Home"), icon: LayoutDashboard },
-    { value: "students", label: tx("الطلاب", "Students"), icon: Users },
-    { value: "lectures", label: tx("الوحدات والمحاضرات", "Units & lectures"), icon: Video },
+    { value: "home", label: tx("الرئيسية", "Home"), icon: PanelsTopLeft },
+    { value: "students", label: tx("الطلاب", "Students"), icon: UsersRound },
+    { value: "lectures", label: tx("الوحدات والمحاضرات", "Units & lectures"), icon: Clapperboard },
     { value: "codes", label: tx("الأكواد", "Codes"), icon: KeyRound },
     { value: "exams", label: tx("الامتحانات", "Exams"), icon: ClipboardList },
     { value: "grading", label: tx("تصحيح الامتحانات", "Exam grading"), icon: ClipboardCheck },
-    { value: "performance", label: tx("أداء الطلاب", "Student performance"), icon: BarChart3 },
-    { value: "accounts", label: tx("الحسابات", "Accounts"), icon: CircleDollarSign },
-    { value: "me", label: tx("حسابي", "Account"), icon: UserCog },
+    {
+      value: "performance",
+      label: tx("أداء الطلاب", "Student performance"),
+      icon: ChartNoAxesCombined,
+    },
+    { value: "accounts", label: tx("الحسابات", "Accounts"), icon: BadgeDollarSign },
+    { value: "me", label: tx("حسابي", "Account"), icon: UserRoundCog },
   ];
   useEffect(() => {
     const go = (event: Event) => setTab((event as CustomEvent<string>).detail);
