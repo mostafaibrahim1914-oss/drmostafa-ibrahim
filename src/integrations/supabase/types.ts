@@ -240,6 +240,8 @@ export type Database = {
           folder_id: string | null;
           id: string;
           is_closed: boolean;
+          is_published: boolean;
+          sort_order: number;
           stage: Database["public"]["Enums"]["stage_level"];
           title: string;
         };
@@ -250,6 +252,8 @@ export type Database = {
           folder_id?: string | null;
           id?: string;
           is_closed?: boolean;
+          is_published?: boolean;
+          sort_order?: number;
           stage: Database["public"]["Enums"]["stage_level"];
           title: string;
         };
@@ -260,6 +264,8 @@ export type Database = {
           folder_id?: string | null;
           id?: string;
           is_closed?: boolean;
+          is_published?: boolean;
+          sort_order?: number;
           stage?: Database["public"]["Enums"]["stage_level"];
           title?: string;
         };
@@ -588,6 +594,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_move_exam: {
+        Args: { _direction: string; _exam_id: string };
+        Returns: boolean;
+      };
       admin_delete_student: {
         Args: { _user_id: string };
         Returns: undefined;

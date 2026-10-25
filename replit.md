@@ -26,6 +26,10 @@ Before creating or editing exams with a time limit, run `supabase/migrations/202
 
 The student countdown starts on first open; its start time and latest answers are kept in that student's browser storage so reloading the page does not reset the timer or discard answers. Deadline submission still depends on the browser being able to call the existing `submit_attempt` RPC; this client-side timer is not server-enforced.
 
+### Exam drafts and ordering
+
+Run `supabase/migrations/20261025210000_exam_drafts_stage_order.sql` in the existing Supabase project's SQL Editor before deploying exam drafts, stage filtering, or custom ordering. Existing exams remain published. New exams are saved as drafts and stay hidden from students until the admin adds at least one question and publishes them. Admins can rename exams and reorder them within each stage; students see published exams in that order.
+
 ## Essay exam grading
 
 Before using essay grading, open the existing Supabase project's SQL Editor and run the contents of `supabase/migrations/20261008090000_admin_essay_grading_notifications.sql`. This migration adds the admin-only grading RPC and notification links; the current project connection does not have permission to apply database migrations. The Supabase API confirmed the new notification-link column is not yet present.

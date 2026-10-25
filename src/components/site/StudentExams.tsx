@@ -25,6 +25,8 @@ type ExamRecord = {
   folder_id: string | null;
   is_closed: boolean;
   duration_minutes: number | null;
+  is_published: boolean;
+  sort_order: number;
 };
 type AttemptRecord = {
   exam_id: string;
@@ -426,7 +428,7 @@ export function StudentExams() {
   const load = useCallback(async () => {
     const [folderResult, examResult, attemptResult] = await Promise.all([
       db.from("folders").select("*").order("created_at"),
-      db.from("exams").select("*").order("created_at"),
+      db.from("exams").select("*").eq("is_published", true).order("sort_order").order("created_at"),
       db.from("attempts").select("exam_id,score,total,grading_status"),
     ]);
     setFolders(folderResult.data ?? []);
